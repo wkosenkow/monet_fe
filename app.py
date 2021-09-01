@@ -35,6 +35,26 @@ if __name__ == '__main__':
 
     st.write('You selected:', selected_painter)
     
+    if st.button(f'Transform my image into {selected_painter}'):
+    # print is visible in the server output, not in the page
+        print('our AI is transforming the image')
+    
+        import time
+
+        'Starting a long computation...'
+
+        # Add a placeholder
+        latest_iteration = st.empty()
+        bar = st.progress(0)
+
+        for i in range(100):
+            # Update the progress bar with each iteration.
+            latest_iteration.text(f'Iteration {i+1}')
+            bar.progress(i + 1)
+            time.sleep(0.1)
+
+        '...and now the image is done!'
+    
     
     
     
