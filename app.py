@@ -41,7 +41,7 @@ if __name__ == '__main__':
     
         import time
 
-        'Starting a long computation...'
+        'Starting a long computation..some long computation.'
 
         # Add a placeholder
         latest_iteration = st.empty()
