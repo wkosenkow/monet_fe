@@ -7,20 +7,20 @@ import requests
 
  
 
-def file_selector(folder_path='.'):
-    filenames = os.listdir(folder_path)
-    selected_filename = st.selectbox('Select a file', filenames)
-    return os.path.join(folder_path, selected_filename)
+# def file_selector(folder_path='.'):
+#     filenames = os.listdir(folder_path)
+#     selected_filename = st.selectbox('Select a file', filenames)
+#     return os.path.join(folder_path, selected_filename)
 
 @st.cache
 def load_image(image_file):
     img = Image.open(image_file)
-    return img 
+    img_resized = img.resize((256,256))
+    return img_resized 
 
 if __name__ == '__main__':
     # Select a file
     st.markdown("""# Transform any image into a monet-painting
-    ##Upload an image
     """)
     current_directory = os.getcwd()
     final_directory = os.path.join(current_directory, r'tempDir')
@@ -28,19 +28,28 @@ if __name__ == '__main__':
         os.makedirs(final_directory)
     
     uploaded_file = st.file_uploader("Upload Files",type=['png','jpg','jpeg'])
+    ##### SELECTING THE PAINTER from Drop Down
+    selected_painter = st.selectbox(
+    'Which painter would you like to choose?',
+    ('Monet', 'Van Gogh', 'Ukiyo-e','Cezanne'))
+
+    st.write('You selected:', selected_painter)
+    
+    
+    
     
     if uploaded_file is not None:
         file_details = {"FileName":uploaded_file.name,"FileType":uploaded_file.type,"FileSize":uploaded_file.size}
         filename = file_details['FileName']
         
-        st.write(file_details)   
+        # st.write(file_details)   
         img = load_image(uploaded_file)
         st.image(img, caption = "Uploaded Image")
         with open(os.path.join("tempDir",uploaded_file.name),"wb") as f: 
             f.write(uploaded_file.getbuffer())         
-            st.success("Saved File")    
+            # st.success("Saved File")    
         filepath = (os.path.join("tempDir",uploaded_file.name))
-        st.write(filepath)
+        # st.write(filepath)
         
         
 
@@ -110,29 +119,36 @@ if __name__ == '__main__':
             
             filename_upload = f'frontend_upload_images./{filepath}'
             
+            params = {"file_path":filename_upload,"painter":f'{selected_painter}'}
 
             #calling the upload function as a condition to then downloading file from bucket 
             if upload_to_bucket(filename_upload,filepath,bucket_name):
-                def download_from_bucket(blob_name, file_path, bucket_name):
-                    try:
-                        bucket = storage_client.get_bucket(bucket_name)
-                        blob = bucket.blob(blob_name)
-                        with open(file_path, 'wb') as f:
-                            storage_client.download_blob_to_file(blob, f)
-                        return True
-
-                    except Exception as e:
-                        print(e)
-                        return False
-                    
-                #calling the download function
-                folder_name = 'frontend_download_images'
-                filename_download = filepath
-                download_from_bucket(f'{folder_name}/{filepath}',os.getcwd(),bucket_name)
-                downloaded_image_path = uploaded_file.name
                 
-                image2 = Image.open(downloaded_image_path)
-                st.image(image2, caption=st.markdown('''#Downloaded Image'''), use_column_width=False)
+                url = f"https://www.monetmoney.com/predict/?painter={params['painter']}/?file={params['file_path']}"
+                response = requests.get(url).json()
+                if response['success']:
+                    def download_from_bucket(blob_name, file_path, bucket_name):
+                        try:
+                            bucket = storage_client.get_bucket(bucket_name)
+                            blob = bucket.blob(blob_name)
+                            with open(file_path, 'wb') as f:
+                                storage_client.download_blob_to_file(blob, f)
+                            return True
+
+                        except Exception as e:
+                            print(e)
+                            return False
+                    
+                    #calling the download function
+                    folder_name = 'frontend_download_images'
+                    filename_download = filepath
+                    download_from_bucket(f'{folder_name}/impression_Sunrise.jpg',os.path.join(os.getcwd(), 'downloaded_image69'),bucket_name)
+                    
+                    
+                    image2 = Image.open(os.path.join(os.getcwd(), 'downloaded_image69'))
+                    st.image(image2, caption=st.markdown('''#Downloaded Image'''), use_column_width=False)
+            
+            
         
         
         
